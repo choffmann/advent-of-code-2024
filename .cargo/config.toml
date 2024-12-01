@@ -1,0 +1,2 @@
+[alias]
+solve = "run --quiet --release --bin"
