@@ -4,8 +4,17 @@ pub trait Problem {
 
     fn run(&self, day: u8) {
         let input = read_input(day);
-        println!("Part one: {}", self.part_one(&input));
-        println!("Part two: {}", self.part_two(&input));
+        let now = std::time::Instant::now();
+        let part_one = self.part_one(&input);
+        let part_one_time = now.elapsed();
+
+        let now = std::time::Instant::now();
+        let part_two = self.part_two(&input);
+        let part_two_time = now.elapsed();
+
+        println!("Day {:02}:", day);
+        println!("  Part 1: {} ({:?})", part_one, part_one_time);
+        println!("  Part 2: {} ({:?})", part_two, part_two_time);
     }
 }
 
