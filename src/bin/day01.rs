@@ -4,9 +4,9 @@ use aoc_2024::Problem;
 
 struct Day01;
 
-impl Problem for Day01 {
-    fn part_one(&self, input: &str) -> String {
-        let (mut lhs, mut rhs): (Vec<u32>, Vec<u32>) = input
+impl Day01 {
+    fn parse_input(&self, input: &str) -> (Vec<u32>, Vec<u32>) {
+        input
             .lines()
             .filter_map(|line| {
                 let mut parts = line.split_whitespace();
@@ -15,7 +15,13 @@ impl Problem for Day01 {
                     parts.next()?.parse::<u32>().ok()?,
                 ))
             })
-            .unzip();
+            .unzip()
+    }
+}
+
+impl Problem for Day01 {
+    fn part_one(&self, input: &str) -> String {
+        let (mut lhs, mut rhs) = self.parse_input(input);
 
         lhs.sort_unstable();
         rhs.sort_unstable();
@@ -25,16 +31,7 @@ impl Problem for Day01 {
     }
 
     fn part_two(&self, input: &str) -> String {
-        let (lhs, rhs): (Vec<u32>, Vec<u32>) = input
-            .lines()
-            .filter_map(|line| {
-                let mut parts = line.split_whitespace();
-                Some((
-                    parts.next()?.parse::<u32>().ok()?,
-                    parts.next()?.parse::<u32>().ok()?,
-                ))
-            })
-            .unzip();
+        let (lhs, rhs) = self.parse_input(input);
 
         let rhs_counts: HashMap<u32, usize> =
             rhs.iter().copied().fold(HashMap::new(), |mut acc, x| {
@@ -57,7 +54,6 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     const TEST_INPUT: &str = "\
 3   4
 4   3
