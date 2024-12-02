@@ -102,26 +102,18 @@ impl Problem for Day02 {
     }
 
     fn part_two(&self, input: &str) -> String {
-        let mut unsafe_lines = Vec::new();
-
         let valid_count = self.read_input(input).iter().fold(0, |acc, line| {
             if self.is_line_valid(line) {
                 acc + 1
             } else {
-                unsafe_lines.push(line.clone());
+                if self.can_be_fixed(line) {
+                    return acc + 1;
+                }
                 acc
             }
         });
 
-        let additional_valid_count = unsafe_lines.iter().fold(0, |acc, line| {
-            if self.can_be_fixed(line) {
-                acc + 1
-            } else {
-                acc
-            }
-        });
-
-        (valid_count + additional_valid_count).to_string()
+        valid_count.to_string()
     }
 }
 
