@@ -2,5 +2,9 @@
 name = "aoc-2024"
 version = "0.1.0"
 edition = "2021"
+authors = ["Cedrik Hoffmann <dev@choffmann.io>"]
+description = "Advent of Code 2024"
+repository = "https://github.com/choffmann/advent-of-code-2024"
+keywords = ["advent-of-code", "aoc", "2024"]
 
 [dependencies]
