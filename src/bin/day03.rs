@@ -2,25 +2,49 @@ use aoc_2024::Problem;
 
 struct Day03;
 
+impl Day03 {
+    fn extract_muls(&self, input: &str) -> Vec<(i32, i32, bool)> {
+        let re = regex::Regex::new(r"(do(?:n't)?\(\)|mul\((\d{1,3}),(\d{1,3})\))").unwrap();
+        let mut is_on = true;
+
+        re.captures_iter(input)
+            .filter_map(|caps| match caps.get(0).map(|m| m.as_str()) {
+                Some("don't()") => {
+                    is_on = false;
+                    None
+                }
+                Some("do()") => {
+                    is_on = true;
+                    None
+                }
+                Some(_) => caps.get(2).zip(caps.get(3)).map(|(first, second)| {
+                    (
+                        first.as_str().parse::<i32>().unwrap(),
+                        second.as_str().parse::<i32>().unwrap(),
+                        is_on,
+                    )
+                }),
+                None => None,
+            })
+            .collect()
+    }
+}
+
 impl Problem for Day03 {
     fn part_one(&self, input: &str) -> String {
-        let re = regex::Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
-        let nums: Vec<(i32, i32)> = re
-            .captures_iter(input)
-            .map(|caps| {
-                let (_, [first, second]) = caps.extract();
-                let first = first.parse::<i32>().unwrap();
-                let second = second.parse::<i32>().unwrap();
-                (first, second)
-            })
-            .collect();
-
-        let sum: i32 = nums.iter().map(|&x| x.0 * x.1).sum();
-        sum.to_string()
+        self.extract_muls(input)
+            .iter()
+            .map(|&(first, second, _)| first * second)
+            .sum::<i32>()
+            .to_string()
     }
 
     fn part_two(&self, input: &str) -> String {
-        "todo".to_string()
+        self.extract_muls(input)
+            .iter()
+            .map(|&(first, second, is_on)| if is_on { first * second } else { 0 })
+            .sum::<i32>()
+            .to_string()
     }
 }
 
@@ -48,3 +72,4 @@ mod tests {
         assert_eq!(day.part_two(TEST_INPUT_2), "48");
     }
 }
+
