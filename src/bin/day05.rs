@@ -47,7 +47,7 @@ impl Problem for Day05 {
         prints
             .iter()
             .filter(|p| self.is_valid(&rules, p))
-            .map(|p| p.get(p.len() / 2).unwrap())
+            .map(|p| p[p.len() / 2])
             .sum::<u32>()
             .to_string()
     }
