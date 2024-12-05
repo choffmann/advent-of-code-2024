@@ -1,12 +1,14 @@
 use core::str;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::HashSet};
 
 use aoc_2024::Problem;
 
 struct Day05;
 
+type Rules = HashSet<(u32, u32)>;
+
 impl Day05 {
-    fn parse_rules(&self, input: &str) -> Vec<(u32, u32)> {
+    fn parse_rules(&self, input: &str) -> Rules {
         input
             .lines()
             .take_while(|l| !l.is_empty())
@@ -32,10 +34,8 @@ impl Day05 {
             .collect()
     }
 
-    fn is_valid(&self, rules: &[(u32, u32)], print: &[u32]) -> bool {
-        print
-            .windows(2)
-            .all(|x| rules.iter().any(|(a, b)| x[0] == *a && x[1] == *b))
+    fn is_valid(&self, rules: &Rules, line: &[u32]) -> bool {
+        line.windows(2).all(|x| rules.contains(&(x[0], x[1])))
     }
 }
 
@@ -61,9 +61,9 @@ impl Problem for Day05 {
             .filter(|p| !self.is_valid(&rules, p))
             .map(|mut p| {
                 p.sort_by(|&a, &b| {
-                    if rules.iter().any(|(x, y)| a == *x && b == *y) {
+                    if rules.contains(&(a, b)) {
                         Ordering::Less
-                    } else if rules.iter().any(|(x, y)| a == *y && b == *x) {
+                    } else if rules.contains(&(b, a)) {
                         Ordering::Greater
                     } else {
                         Ordering::Equal
