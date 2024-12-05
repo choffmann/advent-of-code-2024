@@ -59,9 +59,8 @@ impl Problem for Day05 {
         prints
             .into_iter()
             .filter(|p| !self.is_valid(&rules, p))
-            .map(|p| {
-                let mut copy = p.clone();
-                copy.sort_by(|&a, &b| {
+            .map(|mut p| {
+                p.sort_by(|&a, &b| {
                     if rules.iter().any(|(x, y)| a == *x && b == *y) {
                         Ordering::Less
                     } else if rules.iter().any(|(x, y)| a == *y && b == *x) {
@@ -70,7 +69,8 @@ impl Problem for Day05 {
                         Ordering::Equal
                     }
                 });
-                copy
+
+                p
             })
             .map(|p| p[p.len() / 2])
             .sum::<u32>()
