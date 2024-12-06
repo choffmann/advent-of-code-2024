@@ -5,17 +5,13 @@ use aoc_2024::Problem;
 
 struct Day06;
 
-impl Day06 {}
+impl Day06 {
+    fn parse_map(&self, input: &str) -> Vec<Vec<char>> {
+        input.lines().map(|line| line.chars().collect()).collect()
+    }
 
-impl Problem for Day06 {
-    fn part_one(&self, input: &str) -> String {
-        let mut map = input
-            .lines()
-            .map(|line| line.chars().collect::<Vec<char>>())
-            .collect::<Vec<Vec<char>>>();
-
-        let mut player_pos = map
-            .iter()
+    fn parse_player_pos(&self, map: &Vec<Vec<char>>) -> (usize, usize) {
+        map.iter()
             .enumerate()
             .find_map(|(y, row)| {
                 row.iter().enumerate().find_map(
@@ -28,8 +24,20 @@ impl Problem for Day06 {
                     },
                 )
             })
-            .unwrap();
+            .unwrap()
+    }
 
+    fn print_map(map: &Vec<Vec<char>>) {
+        for row in map {
+            println!("{}", row.iter().collect::<String>());
+        }
+    }
+}
+
+impl Problem for Day06 {
+    fn part_one(&self, input: &str) -> String {
+        let mut map = self.parse_map(input);
+        let mut player_pos = self.parse_player_pos(&map);
         let directions = [
             (0, -1), // up
             (1, 0),  // right
@@ -70,12 +78,7 @@ impl Problem for Day06 {
             }
         }
 
-        for row in &map {
-            println!("{}", row.iter().collect::<String>());
-        }
-
-        println!("{:?}", player_pos);
-
+        Day06::print_map(&map);
         sum.len().to_string()
     }
 
