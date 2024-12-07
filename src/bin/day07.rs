@@ -4,7 +4,24 @@ use aoc_2024::Problem;
 
 struct Day07;
 
-impl Day07 {}
+impl Day07 {
+    fn parse_input(&self, input: &str) -> Vec<(usize, Vec<usize>)> {
+        input
+            .lines()
+            .map(|line| {
+                let mut parts = line.split(": ");
+                let sum = parts.next().unwrap().parse::<usize>().unwrap();
+                let parts = parts
+                    .next()
+                    .unwrap()
+                    .split_whitespace()
+                    .map(|n| n.parse::<usize>().unwrap())
+                    .collect::<Vec<_>>();
+                (sum, parts)
+            })
+            .collect()
+    }
+}
 
 fn check(numbers: &[usize], idx: usize, current_sum: usize, result: usize) -> bool {
     if idx == numbers.len() {
@@ -18,21 +35,12 @@ fn check(numbers: &[usize], idx: usize, current_sum: usize, result: usize) -> bo
 
 impl Problem for Day07 {
     fn part_one(&self, input: &str) -> String {
-        input
-            .lines()
-            .filter_map(|line| {
-                let mut parts = line.split(": ");
-                let sum = parts.next().unwrap().parse::<usize>().unwrap();
-                let parts = parts
-                    .next()
-                    .unwrap()
-                    .split_whitespace()
-                    .map(|n| n.parse::<usize>().unwrap())
-                    .collect::<Vec<_>>();
-
+        self.parse_input(input)
+            .iter()
+            .filter_map(|(sum, parts)| {
                 for i in 0..parts.len() {
-                    if check(&parts, i, 0, sum) {
-                        return Some(sum);
+                    if check(&parts, i, 0, *sum) {
+                        return Some(*sum);
                     }
                 }
 
