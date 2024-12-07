@@ -27,9 +27,22 @@ fn check(numbers: &[usize], idx: usize, current_sum: usize, result: usize) -> bo
     if idx == numbers.len() {
         return current_sum == result;
     } else {
-        let op1 = current_sum + numbers[idx];
-        let op2 = current_sum * numbers[idx];
+        let (op1, op2) = (current_sum + numbers[idx], current_sum * numbers[idx]);
         return check(numbers, idx + 1, op1, result) || check(numbers, idx + 1, op2, result);
+    }
+}
+
+fn check_concat(numbers: &[usize], idx: usize, current_sum: usize, result: usize) -> bool {
+    if idx == numbers.len() {
+        return current_sum == result;
+    } else {
+        let (op1, op2) = (current_sum + numbers[idx], current_sum * numbers[idx]);
+        let concat = format!("{}{}", current_sum, numbers[idx])
+            .parse::<usize>()
+            .unwrap();
+        return check_concat(numbers, idx + 1, op1, result)
+            || check_concat(numbers, idx + 1, op2, result)
+            || check_concat(numbers, idx + 1, concat, result);
     }
 }
 
@@ -51,7 +64,19 @@ impl Problem for Day07 {
     }
 
     fn part_two(&self, input: &str) -> String {
-        "todo".to_string()
+        self.parse_input(input)
+            .iter()
+            .filter_map(|(sum, parts)| {
+                for i in 0..parts.len() {
+                    if check_concat(&parts, i, 0, *sum) {
+                        return Some(*sum);
+                    }
+                }
+
+                None
+            })
+            .sum::<usize>()
+            .to_string()
     }
 }
 
@@ -81,5 +106,8 @@ mod tests {
     }
 
     #[test]
-    fn part_two() {}
+    fn part_two() {
+        let day = Day07;
+        assert_eq!(day.part_two(TEST_INPUT), "11387");
+    }
 }
