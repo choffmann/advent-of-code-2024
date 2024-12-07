@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     io::{stdin, stdout, Read, Write},
 };
@@ -8,21 +8,20 @@ use aoc_2024::Problem;
 
 struct Day06;
 
+#[derive(Clone)]
 struct Map(Vec<Vec<Point>>);
 
+#[derive(Clone, Copy)]
 struct Point {
     x: i8,
     y: i8,
     v: char,
+    visited_dir: Option<Direction>,
 }
 
 impl Point {
     fn is_obstacle(&self) -> bool {
-        self.v == '#'
-    }
-
-    fn is_empty(&self) -> bool {
-        self.v == '.'
+        self.v == '#' || self.v == 'O'
     }
 }
 
@@ -33,8 +32,30 @@ impl Display for Point {
 }
 
 impl Map {
-    fn at(&self, x: usize, y: usize) -> &Point {
-        &self.0[y][x]
+    fn at(&self, x: usize, y: usize) -> Option<&Point> {
+        if y >= self.len() || x >= self.0[y].len() {
+            return None;
+        } else {
+            Some(&self.0[y][x])
+        }
+    }
+
+    fn player_start(&self) -> (usize, usize) {
+        self.0
+            .iter()
+            .enumerate()
+            .find_map(|(y, row)| {
+                row.iter().enumerate().find_map(
+                    |(x, cell)| {
+                        if cell.v == '^' {
+                            Some((x, y))
+                        } else {
+                            None
+                        }
+                    },
+                )
+            })
+            .unwrap()
     }
 
     fn set(&mut self, x: usize, y: usize, value: char) {
@@ -42,7 +63,17 @@ impl Map {
             x: x as i8,
             y: y as i8,
             v: value,
+            visited_dir: None,
         };
+    }
+
+    fn visit(&mut self, x: usize, y: usize, dir: Direction) {
+        self.set(x, y, 'X');
+        self.0[y][x].visited_dir = Some(dir);
+    }
+
+    fn place_obstacle(&mut self, x: usize, y: usize) {
+        self.set(x, y, 'O');
     }
 
     fn row(&self, y: usize) -> Option<&[Point]> {
@@ -70,7 +101,7 @@ impl Display for Map {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 enum Direction {
     Up,
     Right,
@@ -106,24 +137,38 @@ struct Player {
 }
 
 impl Player {
-    fn step(&mut self, map: &mut Map) -> Option<&Point> {
+    fn step(&mut self, map: &mut Map, write: bool) -> Option<Point> {
         let (dx, dy) = self.dir.clone().into();
         let (x, y) = ((self.pos.x as i8 + dx) as usize, (self.pos.y + dy) as usize);
 
-        if y >= map.len() || map.row(y).map_or(true, |row| x > row.len()) {
+        if y > map.len() || map.row(y).map_or(true, |row| x > row.len()) {
             return None;
         }
 
-        if map.at(x, y).is_obstacle() {
+        if map.at(x, y)?.is_obstacle() {
             self.dir = self.dir.next();
-            return Some(&self.pos);
+            let point = map.at(x, y).unwrap().clone(); // TODO: Fix this
+            return Some(point);
         }
 
         self.pos.x += dx;
         self.pos.y += dy;
-        map.set(self.pos.x as usize, self.pos.y as usize, 'X');
+        if write {
+            map.visit(x, y, self.dir.clone());
+        }
+        let point = map.at(x, y).unwrap().clone(); // TODO: Fix this
+        return Some(point);
+    }
 
-        Some(&self.pos)
+    fn peek(&self, map: &Map) -> Option<Point> {
+        let (dx, dy) = self.dir.clone().into();
+        let (x, y) = ((self.pos.x as i8 + dx) as usize, (self.pos.y + dy) as usize);
+
+        if y > map.len() || map.row(y).map_or(true, |row| x > row.len()) {
+            return None;
+        }
+
+        map.at(x, y).cloned()
     }
 }
 
@@ -133,7 +178,12 @@ impl Day06 {
             .lines()
             .map(|line| {
                 line.chars()
-                    .map(|c| Point { x: 0, y: 0, v: c })
+                    .map(|c| Point {
+                        x: 0,
+                        y: 0,
+                        v: c,
+                        visited_dir: None,
+                    })
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
@@ -164,6 +214,7 @@ impl Day06 {
                 x: pos.0 as i8,
                 y: pos.1 as i8,
                 v: '^',
+                visited_dir: None,
             },
             dir: Direction::Up,
         }
@@ -185,7 +236,7 @@ impl Problem for Day06 {
         let mut sum = HashSet::new();
         let player_pos = &player.pos;
         sum.insert((player_pos.x, player_pos.y));
-        while let Some(point) = player.step(&mut map) {
+        while let Some(point) = player.step(&mut map, true) {
             sum.insert((point.x, point.y));
         }
 
@@ -193,7 +244,47 @@ impl Problem for Day06 {
     }
 
     fn part_two(&self, input: &str) -> String {
-        "todo".to_string()
+        let mut map = self.new_map(input);
+        let mut obstacles = self.new_player(&map);
+
+        let mut sum = 0;
+        while obstacles.step(&mut map, false).is_some() {
+            let mut new_map = map.clone();
+            let mut player = self.new_player(&new_map);
+
+            new_map.place_obstacle(obstacles.pos.x as usize, obstacles.pos.y as usize);
+
+            let mut visited = HashMap::new();
+            while let Some(point) = player.step(&mut new_map, true) {
+                println!(
+                    "Player: x: {}, y: {}, dir: {:?})",
+                    player.pos.x, player.pos.y, player.dir
+                );
+                println!(
+                    "Point: x: {}, y: {}, v: {}, visited: {:?})",
+                    point.x, point.y, point.v, point.visited_dir
+                );
+                println!("Loops: {}", sum);
+
+                println!("{}", new_map);
+                pause();
+                visited.insert((point.x, point.y), player.dir);
+
+                if let Some(peek_point) = player.peek(&new_map) {
+                    if let Some(dir) = visited.get(&(point.x, point.y)) {
+                        if let Some(peek_point_dir) = peek_point.visited_dir {
+                            if peek_point_dir == *dir {
+                                println!("Loop detected");
+                                sum += 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        sum.to_string()
     }
 }
 
